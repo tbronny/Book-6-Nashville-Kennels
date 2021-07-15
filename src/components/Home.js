@@ -1,6 +1,12 @@
 import React from "react"
 import { PropsAndState } from "./PropsAndState"
 
+// loggedInCustomer = () => {
+//     if (localStorage.value === customer.id) {
+//         return customer.name
+//     }
+// }
+
 export const Home = () => (
     <>
         <h2>Nashville Kennels</h2>
@@ -10,6 +16,6 @@ export const Home = () => (
             <div>Visit Us at the Nashville North Location</div>
             <div>500 Puppy Way</div>
         </address>
-        <PropsAndState yourName={"Tristan"} />
+        <PropsAndState yourName={""} />
     </>
 )

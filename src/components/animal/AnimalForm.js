@@ -3,10 +3,10 @@ import { LocationContext } from "../location/LocationProvider"
 import { AnimalContext } from "../animal/AnimalProvider"
 import { CustomerContext } from "../customer/CustomerProvider"
 import "./Animal.css"
-import { useHistory } from "react-router-dom"
+import { useHistory, useParams } from "react-router-dom"
 
 export const AnimalForm = () => {
-    const { addAnimal } = useContext(AnimalContext)
+    const { addAnimal, getAnimalById, updateAnimal } = useContext(AnimalContext)
     const { locations, getLocations } = useContext(LocationContext)
     const { customers, getCustomers } = useContext(CustomerContext)
 
@@ -16,13 +16,11 @@ export const AnimalForm = () => {
   Define the intial state of the form inputs with useState()
   */
 
-    const [animal, setAnimal] = useState({
-        name: "",
-        breed: "",
-        locationId: 0,
-        customerId: 0,
-    })
+    const [animal, setAnimal] = useState({})
 
+    const [isLoading, setIsLoading] = useState(true)
+
+    const { animalId } = useParams()
     const history = useHistory()
 
     /*
@@ -30,7 +28,18 @@ export const AnimalForm = () => {
   and locations state on initialization.
   */
     useEffect(() => {
-        getCustomers().then(getLocations)
+        getCustomers()
+            .then(getLocations)
+            .then(() => {
+                if (animalId) {
+                    getAnimalById(animalId).then((animal) => {
+                        setAnimal(animal)
+                        setIsLoading(false)
+                    })
+                } else {
+                    setIsLoading(false)
+                }
+            })
     }, [])
 
     //when a field changes, update state. The return will re-render and display based on the values in state
@@ -48,24 +57,30 @@ export const AnimalForm = () => {
     }
 
     const handleClickSaveAnimal = (event) => {
-        event.preventDefault() //Prevents the browser from submitting the form
-
-        const locationId = parseInt(animal.locationId)
-        const customerId = parseInt(animal.customerId)
-
-        if (locationId === 0 || customerId === 0) {
-            window.alert("Please select a location and a customer")
+        event.preventDefault()
+        if (parseInt(animal.locationId) === 0) {
+            window.alert("Please select a location")
         } else {
-            //Invoke addAnimal passing the new animal object as an argument
-            //Once complete, change the url and display the animal list
-
-            const newAnimal = {
-                name: animal.name,
-                breed: animal.breed,
-                locationId: locationId,
-                customerId: customerId,
+            //disable the button - no extra clicks
+            setIsLoading(true)
+            if (animalId) {
+                //PUT - update
+                updateAnimal({
+                    id: animal.id,
+                    name: animal.name,
+                    breed: animal.breed,
+                    locationId: parseInt(animal.locationId),
+                    customerId: parseInt(animal.customerId),
+                }).then(() => history.push(`/animals/detail/${animal.id}`))
+            } else {
+                //POST - add
+                addAnimal({
+                    name: animal.name,
+                    breed: animal.breed,
+                    locationId: parseInt(animal.locationId),
+                    customerId: parseInt(animal.customerId),
+                }).then(() => history.push("/animals"))
             }
-            addAnimal(newAnimal).then(() => history.push("/animals"))
         }
     }
 
@@ -82,7 +97,7 @@ export const AnimalForm = () => {
                         autoFocus
                         className="form-control"
                         placeholder="Animal name"
-                        value={animal.name}
+                        defaultValue={animal.name}
                         onChange={handleControlledInputChange}
                     />
                 </div>
@@ -140,8 +155,12 @@ export const AnimalForm = () => {
                     </select>
                 </div>
             </fieldset>
-            <button className="btn btn-primary" onClick={handleClickSaveAnimal}>
-                Save Animal
+            <button
+                className="btn btn-primary"
+                onClick={handleClickSaveAnimal}
+                disabled={isLoading}
+            >
+                {animalId ? "Save Animal" : "Add Animal"}
             </button>
         </form>
     )

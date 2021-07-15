@@ -7,6 +7,14 @@ export const AnimalContext = createContext()
 export const AnimalProvider = (props) => {
     const [animals, setAnimals] = useState([])
 
+    const [searchTerms, setSearchTerms] = useState("")
+
+    const getAnimalById = (id) => {
+        return fetch(
+            `http://localhost:8088/animals/${id}?_expand=location&_expand=customer`
+        ).then((res) => res.json()) // note we don't set anything on state here. Why?
+    }
+
     const getAnimals = () => {
         return fetch(
             "http://localhost:8088/animals?_expand=location&_expand=customer"
@@ -22,7 +30,24 @@ export const AnimalProvider = (props) => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(animalObj),
-        }).then((response) => response.json())
+        }).then(getAnimals)
+    }
+    // .then((response) => response.json())
+
+    const releaseAnimal = (animalId) => {
+        return fetch(`http://localhost:8088/animals/${animalId}`, {
+            method: "DELETE",
+        }).then(getAnimals)
+    }
+
+    const updateAnimal = (animal) => {
+        return fetch(`http://localhost:8088/animals/${animal.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(animal),
+        }).then(getAnimals)
     }
 
     /*
@@ -37,6 +62,11 @@ export const AnimalProvider = (props) => {
                 animals,
                 getAnimals,
                 addAnimal,
+                getAnimalById,
+                releaseAnimal,
+                updateAnimal,
+                searchTerms,
+                setSearchTerms,
             }}
         >
             {props.children}
